@@ -12,12 +12,11 @@ void process(char dir, int teta, char * ims_name, char * imd_name) {
     int rows = pnm_get_height(ims);
     int cols = pnm_get_width(ims);
 
-    pnm imd = pnm_new(cols, rows, PnmRawPpm);
-    unsigned short * data = pnm_get_image(imd);
-    size_t size = rows*cols*3;
-    while(size--) *data++ = 0;
-
     float t = tanf(teta * PI / 180);
+
+    pnm imd;
+    unsigned short * data;
+    size_t size;
 
     switch (dir) {
         case 'h':
@@ -25,10 +24,20 @@ void process(char dir, int teta, char * ims_name, char * imd_name) {
         (x', y') = (x + y*tan(teta), y)
         (x, y) = (x' - y'*tan(teta), y')
         */
+        imd = pnm_new(cols + rows * fabs(t), rows, PnmRawPpm);
+        data = pnm_get_image(imd);
+        size = rows * (cols + rows * fabs(t)) * 3;
+        while(size--) *data++ = 0;
+
         for (int i = 0; i < rows - 1; i++) {
-            for (int j = 0; j < cols - 1; j++) {
+            for (int j = 0; j < (cols + rows * fabs(t)) - 1; j++) {
                 for (int k = 0; k < 3; k++) {
-                    pnm_set_component(imd, i, j, k, bilinear_interpolation(j - i*t, i, ims, k));
+                    if (t >= 0) {
+                        pnm_set_component(imd, i, j, k, bilinear_interpolation(j - i * t, i, ims, k));
+                    }
+                    if (t < 0) {
+                        pnm_set_component(imd, i, j, k, bilinear_interpolation((cols + rows * fabs(t)) - (j - i * t), i, ims, k));
+                    }
                 }
             }
         }
@@ -38,10 +47,20 @@ void process(char dir, int teta, char * ims_name, char * imd_name) {
         (x', y') = (x, y + x*tan(teta))
         (x, y) = (x', y' - x'*tan(teta))
         */
-        for (int i = 0; i < rows - 1; i++) {
+        imd = pnm_new(cols, rows + cols * fabs(t), PnmRawPpm);
+        data = pnm_get_image(imd);
+        size = (rows + cols * fabs(t)) * cols * 3;
+        while(size--) *data++ = 0;
+
+        for (int i = 0; i < (rows + cols * fabs(t)) - 1; i++) {
             for (int j = 0; j < cols - 1; j++) {
                 for (int k = 0; k < 3; k++) {
-                    pnm_set_component(imd, i, j, k, bilinear_interpolation(j, i - j*t, ims, k));
+                    if (t >= 0) {
+                        pnm_set_component(imd, i, j, k, bilinear_interpolation(j, i - j * t, ims, k));
+                    }
+                    if (t < 0) {
+                        pnm_set_component(imd, i, j, k, bilinear_interpolation(j, (rows + cols * fabs(t)) - (i - j * t), ims, k));
+                    }
                 }
             }
         }
