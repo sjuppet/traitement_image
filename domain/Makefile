@@ -9,6 +9,7 @@ LDLIBS   = -lbcl -lm
 BIN = \
 	move\
 	rotate\
+	wave\
 	flip\
 	shear
 
@@ -17,6 +18,7 @@ all: $(BIN)
 
 shear: domain.o
 rotate: domain.o
+wave: domain.o
 
 .PHONY: clean cleanall
 clean:

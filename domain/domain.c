@@ -1,12 +1,12 @@
 #include <math.h>
-
+#include <stdio.h>
 #include <domain.h>
 
 unsigned short bilinear_interpolation(float x, float y, pnm ims, int c) {
     int rows = pnm_get_height(ims);
     int cols = pnm_get_width(ims);
-    int i = y;
-    int j = x;
+    int i = floor(y);
+    int j = floor(x);
     float dx = x - j;
     float dy = y - i;
     float interpolation = 0;
