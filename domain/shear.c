@@ -5,7 +5,7 @@
 
 #include "domain.h"
 
-void process(char * dir, int teta, char * ims_name, char * imd_name) {
+void process(char dir, int teta, char * ims_name, char * imd_name) {
     pnm ims = pnm_load(ims_name);
     int rows = pnm_get_height(ims);
     int cols = pnm_get_width(ims);
@@ -17,7 +17,8 @@ void process(char * dir, int teta, char * ims_name, char * imd_name) {
 
     float t = tanf(teta);
 
-    if (dir[0] == 'h') {
+    switch (dir) {
+        case 'h':
         /*
         (x', y') = (x + y*tan(teta), y)
         (x, y) = (x' - y'*tan(teta), y')
@@ -29,8 +30,8 @@ void process(char * dir, int teta, char * ims_name, char * imd_name) {
                 }
             }
         }
-    }
-    if (dir[0] == 'v') {
+        break;
+        case 'v':
         /*
         (x', y') = (x, y + x*tan(teta))
         (x, y) = (x', y' - x'*tan(teta))
@@ -42,11 +43,12 @@ void process(char * dir, int teta, char * ims_name, char * imd_name) {
                 }
             }
         }
-    }
-    else {
+        break;
+        default:
         printf("First argument is not a valid direction\n");
         exit(EXIT_FAILURE);
     }
+
 
     pnm_save(imd, PnmRawPpm, imd_name);
 
@@ -69,7 +71,7 @@ int main(int argc, char* argv[]){
     char * ims_name = argv[3];
     char * imd_name = argv[4];
 
-    process(dir, teta, ims_name, imd_name);
+    process(*dir, teta, ims_name, imd_name);
     /*
     just for the test, completely useless for the shear program
     for(int channel=0; channel<3; channel++){
