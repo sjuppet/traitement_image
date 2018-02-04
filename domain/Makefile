@@ -10,6 +10,7 @@ BIN = \
 	move\
 	rotate\
 	wave\
+	scroll\
 	flip\
 	shear\
 	sphere

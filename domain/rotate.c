@@ -31,6 +31,8 @@ void process(int x_center, int y_center, float angle, char *ims_name, char *imd_
     }
 
     pnm_save(imd, PnmRawPpm, imd_name);
+    pnm_free(ims);
+    pnm_free(imd);
 }
 
 void usage(char* s) {
