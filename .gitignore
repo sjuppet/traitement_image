@@ -1,6 +1,7 @@
 *
 !bcl-basis
 !domain
+!data/*
 !*.c
 !.gitignore
 !README.md
