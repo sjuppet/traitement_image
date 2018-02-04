@@ -6,17 +6,15 @@ void
 process(int dx, int dy, char* ims_name, char* imd_name)
 {
   pnm ims = pnm_load(ims_name);
-  unsigned short value;
 
   int rows = pnm_get_height(ims);
   int cols = pnm_get_width(ims);
+  unsigned short value;
 
   pnm imd = pnm_new(cols, rows, PnmRawPpm);
   unsigned short * data = pnm_get_image(imd);
-
-  unsigned short * p = data;
   size_t size = rows*cols*3;
-  while(size--) *p++ = 0;
+  while(size--) *data++ = 0;
 
   for (int i = 0; i < rows; i++) {
     for (int j = 0; j < cols; j++) {
