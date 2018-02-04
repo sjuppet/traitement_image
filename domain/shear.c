@@ -5,6 +5,8 @@
 
 #include "domain.h"
 
+#define PI 3.14159265359
+
 void process(char dir, int teta, char * ims_name, char * imd_name) {
     pnm ims = pnm_load(ims_name);
     int rows = pnm_get_height(ims);
@@ -15,7 +17,7 @@ void process(char dir, int teta, char * ims_name, char * imd_name) {
     size_t size = rows*cols*3;
     while(size--) *data++ = 0;
 
-    float t = tanf(teta);
+    float t = tanf(teta * PI / 180);
 
     switch (dir) {
         case 'h':
