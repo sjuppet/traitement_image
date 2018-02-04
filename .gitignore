@@ -1,0 +1,9 @@
+*
+!bcl-basis
+!domain
+!*.c
+!.gitignore
+!README.md
+!data/
+!Makefile
+!asg-res.pdf
