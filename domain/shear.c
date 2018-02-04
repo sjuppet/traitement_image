@@ -36,7 +36,7 @@ void process(char dir, int teta, char * ims_name, char * imd_name) {
                         pnm_set_component(imd, i, j, k, bilinear_interpolation(j - i * t, i, ims, k));
                     }
                     if (t < 0) {
-                        pnm_set_component(imd, i, j, k, bilinear_interpolation((cols + rows * fabs(t)) - (j - i * t), i, ims, k));
+                        pnm_set_component(imd, i, j, k, bilinear_interpolation((j - i * t) - (rows * fabs(t)), i, ims, k));
                     }
                 }
             }
@@ -59,7 +59,7 @@ void process(char dir, int teta, char * ims_name, char * imd_name) {
                         pnm_set_component(imd, i, j, k, bilinear_interpolation(j, i - j * t, ims, k));
                     }
                     if (t < 0) {
-                        pnm_set_component(imd, i, j, k, bilinear_interpolation(j, (rows + cols * fabs(t)) - (i - j * t), ims, k));
+                        pnm_set_component(imd, i, j, k, bilinear_interpolation(j, (i - j * t) - (cols * fabs(t)), ims, k));
                     }
                 }
             }
