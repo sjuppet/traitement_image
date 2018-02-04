@@ -28,6 +28,8 @@ void process(float tx, float ax, float ty, float ay, char *ims_name, char *imd_n
 
 
     pnm_save(imd, PnmRawPpm, imd_name);
+    pnm_free(ims);
+    pnm_free(imd);
 }
 
 void usage(char* s) {
