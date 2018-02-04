@@ -11,7 +11,8 @@ BIN = \
 	rotate\
 	wave\
 	flip\
-	shear
+	shear\
+	sphere
 
 .PHONY: all
 all: $(BIN)
@@ -19,6 +20,7 @@ all: $(BIN)
 shear: domain.o
 rotate: domain.o
 wave: domain.o
+sphere: domain.o
 
 .PHONY: clean cleanall
 clean:
