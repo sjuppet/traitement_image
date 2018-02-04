@@ -21,15 +21,15 @@ pnm image(float Cx, float Cy, float ray, pnm ims, int rows, int cols) {
 
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {
+            /*
+            x' = ray * arcsin(d / ray) * 2 / PI + Cx
+            y' = ray * arcsin(d / ray) * 2 / PI + Cy
+            */
+            d = sqrtf(i * i + j * j);
+            alpha = ray * asinf(d / ray) * 2 / PI;
+            x = alpha + Cx;
+            y = alpha + Cy;
             for (int k = 0; k < 3; k++) {
-                d = sqrtf(i * i + j * j);
-                /*
-                x' = ray * arcsin(d / ray) * 2 / PI + Cx
-                y' = ray * arcsin(d / ray) * 2 / PI + Cy
-                */
-                alpha = ray * asinf(d / ray) * 2 / PI;
-                x = alpha + Cx;
-                y = alpha + Cy;
                 pnm_set_component(imd, i, j, k, bilinear_interpolation(x, y, ims, k));
             }
         }
