@@ -40,11 +40,12 @@ static void prod_mat_vect(float mat[D][D], float vect[D], float res[D]){
     }
 }
 
-void process(char *ims, char *imt, char* imd){
-    (void) ims;
-    (void) imt;
-    (void) imd;
+void process(char *ims_name, char *imt_name, char* imd_name){
+    pnm ims = pnm_load(ims_name);
+    pnm imt = pnm_load(imt_name);
+    pnm imd = pnm_new(pnm_get_width(imt), pnm_get_height(imt), PnmRawPpm);
 
+    pnm_save(imd, imd_name, PnmRawPpm);
 }
 
 void usage (char *s){
