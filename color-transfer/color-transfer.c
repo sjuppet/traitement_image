@@ -44,9 +44,9 @@ static float RAB2LMS[D][D] = {
  * produit matrice vecteur dans res
  */
 static void prod_mat_vect(float mat[D][D], float vect[D], float res[D]){
-    for (size_t i = 0; i < D; i++) {
+    for (int i = 0; i < D; i++) {
         res[i] = 0;
-        for (size_t j = 0; j < D; j++) {
+        for (int j = 0; j < D; j++) {
             res[i] += mat[i][j] * vect[i];
         }
     }
@@ -56,14 +56,31 @@ static void process(char * ims_name, char * imt_name, char * imd_name){
     pnm ims = pnm_load(ims_name);
     pnm imt = pnm_load(imt_name);
     pnm imd = pnm_new(pnm_get_width(imt), pnm_get_height(imt), PnmRawPpm);
+    pnm ims_lms = pnm_new(pnm_get_width(ims), pnm_get_height(ims), PnmRawPpm);
 
     /*
     step 1 : RGB --> ραβ
     step 2 : stats
     step 3 : ραβ -> RGB
     */
+    float rgb[D];
+    float lms[D];
+    int cols = pnm_get_width(ims);
+    int rows = pnm_get_height(ims);
+    int size = rows * cols * D;
+    unsigned short *data_rgb = pnm_get_image(ims);
+    float *data_lms = malloc(sizeof(float) * size);
+    unsigned short *data_imd = pnm_get_image(imd);
 
+    for (int i = 0; i < size; i+=D) {
+        prod_mat_vect(RGB2LMS, data_rgb+i, data_lms+i);
+    }
+    for (int i = 0; i < size; i+=D) {
+        prod_mat_vect(LMS2RGB, data_lms+i, data_imd+i);
+    }
 
+    pnm_save(ims, PnmRawPpm, "rgb.ppm");
+    pnm_save(ims_lms, PnmRawPpm, "lms.ppm");
     pnm_save(imd, PnmRawPpm, imd_name);
 
     pnm_free(ims);
