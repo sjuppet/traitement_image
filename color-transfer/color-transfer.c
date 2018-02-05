@@ -28,6 +28,18 @@ static float LMS2RGB[D][D] = {
     {0.0497, -0.2439, 1.2045}
 };
 
+static float LMS2RAB[D][D] = {
+    {1/sqrtf(3), 1/sqrtf(3), 1/sqrtf(3)},
+    {1/sqrtf(6), 1/sqrtf(6), -2/sqrtf(6)},
+    {1/sqrtf(2), -1/sqrtf(2), 0}
+};
+
+static float RAB2LMS[D][D] = {
+    {sqrtf(3)/3, sqrtf(6)/6, sqrtf(2)/2},
+    {sqrtf(3)/3, sqrtf(6)/6, -sqrtf(2)/2},
+    {sqrtf(3)/3, -sqrtf(6)/3, 0}
+};
+
 /**
  * produit matrice vecteur dans res
  */
@@ -40,7 +52,7 @@ static void prod_mat_vect(float mat[D][D], float vect[D], float res[D]){
     }
 }
 
-void process(char *ims_name, char *imt_name, char* imd_name){
+static void process(char * ims_name, char * imt_name, char * imd_name){
     pnm ims = pnm_load(ims_name);
     pnm imt = pnm_load(imt_name);
     pnm imd = pnm_new(pnm_get_width(imt), pnm_get_height(imt), PnmRawPpm);
@@ -52,7 +64,7 @@ void process(char *ims_name, char *imt_name, char* imd_name){
     */
 
 
-    pnm_save(imd, imd_name, PnmRawPpm);
+    pnm_save(imd, PnmRawPpm, imd_name);
 
     pnm_free(ims);
     pnm_free(imt);
