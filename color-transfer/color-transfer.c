@@ -45,7 +45,18 @@ void process(char *ims_name, char *imt_name, char* imd_name){
     pnm imt = pnm_load(imt_name);
     pnm imd = pnm_new(pnm_get_width(imt), pnm_get_height(imt), PnmRawPpm);
 
+    /*
+    step 1 : RGB --> ραβ
+    step 2 : stats
+    step 3 : ραβ -> RGB
+    */
+
+
     pnm_save(imd, imd_name, PnmRawPpm);
+
+    pnm_free(ims);
+    pnm_free(imt);
+    pnm_free(imd);
 }
 
 void usage (char *s){
