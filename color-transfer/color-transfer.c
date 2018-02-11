@@ -40,6 +40,45 @@ static float RAB2LMS[D][D] = {
     {sqrtf(3)/3, -sqrtf(6)/3, 0}
 };
 
+static void mean(pnm img, float res[D]) {
+    int rows = pnm_get_height(img);
+    int cols = pnm_get_width(img);
+
+    unsigned short sum[D];
+
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+            for (int k = 0; k < 3; k++) {
+                sum[k] += pnm_get_component(img, i, j, k);
+            }
+        }
+    }
+
+    for (size_t i = 0; i < D; i++) {
+        res[D] = sum[D] / (rows * cols);
+    }
+}
+
+static void standard_deviation(pnm img, float res[D]) {
+    float m[D];
+    mean(img, m);
+
+    float square[D];
+
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+            for (int k = 0; k < 3; k++) {
+                square[k] += pnm_get_component(img, i, j, k) * pnm_get_component(img, i, j, k);
+            }
+        }
+    }
+
+    for (size_t i = 0; i < D; i++) {
+        res[D] = sqrtf((square[D] / (rows * cols)) - (m[D] * m[D]));
+    }
+}
+
+
 /**
  * produit matrice vecteur dans res
  */
