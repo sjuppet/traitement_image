@@ -47,7 +47,31 @@ static void prod_mat_vect(float mat[D][D], float vect[D], float res[D]){
     for (int i = 0; i < D; i++) {
         res[i] = 0;
         for (int j = 0; j < D; j++) {
-            res[i] += mat[i][j] * vect[i];
+            res[i] += mat[i][j] * vect[j];
+            // printf("res[%d] += mat[%d][%d] * vect[%d];\n", i, i, j, j);
+            // printf("%f %f %f\n", res[i] ,mat[i][j], vect[j]);
+        }
+        // printf("vect[%4d] %5f  ==>  res[%4d] %5f\n",i , vect[i], i, res[i] );
+        // printf("\n");
+        // printf("#########################################""\n");
+        // printf("\n");
+    }
+}
+
+static void data_ustof(unsigned short *data_src, float *data_dst, int size){
+    for (int i = 0; i < size; i++) {
+        data_dst[i] = data_src[i];
+    }
+}
+
+static void data_ftous(float *data_src, unsigned short *data_dst, int size){
+    for (int i = 0; i < size; i++) {
+        if (data_src[i] < 0) {
+            data_dst[i] = 0;
+        } else if (data_src[i] > 255) {
+            data_dst[i] = 255;
+        } else {
+            data_dst[i] = data_src[i];
         }
     }
 }
@@ -63,25 +87,38 @@ static void process(char * ims_name, char * imt_name, char * imd_name){
     step 2 : stats
     step 3 : ραβ -> RGB
     */
-    float rgb[D];
-    float lms[D];
     int cols = pnm_get_width(ims);
     int rows = pnm_get_height(ims);
     int size = rows * cols * D;
-    unsigned short *data_rgb = pnm_get_image(ims);
-    float *data_lms = malloc(sizeof(float) * size);
+    unsigned short *data_ims = pnm_get_image(ims);
+    unsigned short *data_ims_lms = pnm_get_image(ims_lms);
     unsigned short *data_imd = pnm_get_image(imd);
 
+    float *fdata_ims = malloc(sizeof(float) * size);
+    float *fdata_imd = malloc(sizeof(float) * size);
+    float *fdata_ims_lms = malloc(sizeof(float) * size);
+
+    data_ustof(data_ims, fdata_ims, size);
+
+
     for (int i = 0; i < size; i+=D) {
-        prod_mat_vect(RGB2LMS, data_rgb+i, data_lms+i);
+        // printf("%d\n", i);
+        prod_mat_vect(RGB2LMS, fdata_ims+i, fdata_ims_lms+i);
     }
-    for (int i = 0; i < size; i+=D) {
-        prod_mat_vect(LMS2RGB, data_lms+i, data_imd+i);
-    }
+
+
+
+    // for (int i = 0; i < size; i+=D) {
+    //     prod_mat_vect(LMS2RGB, fdata_ims_lms+i, fdata_imd+i);
+    // }
+
+    data_ftous(fdata_ims, data_ims, size);
+    data_ftous(fdata_ims_lms, data_ims_lms, size);
+    // data_ftous(fdata_imd, data_imd, size);
 
     pnm_save(ims, PnmRawPpm, "rgb.ppm");
     pnm_save(ims_lms, PnmRawPpm, "lms.ppm");
-    pnm_save(imd, PnmRawPpm, imd_name);
+    // pnm_save(imd, PnmRawPpm, imd_name);
 
     pnm_free(ims);
     pnm_free(imt);
