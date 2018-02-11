@@ -40,41 +40,36 @@ static float RAB2LMS[D][D] = {
     {sqrtf(3)/3, -sqrtf(6)/3, 0}
 };
 
-static void mean(pnm img, float res[D]) {
-    int rows = pnm_get_height(img);
-    int cols = pnm_get_width(img);
+static void mean(float * data, int size, float res[D]) {
+    float sum[D];
 
-    unsigned short sum[D];
-
-    for (int i = 0; i < rows; i++) {
-        for (int j = 0; j < cols; j++) {
-            for (int k = 0; k < 3; k++) {
-                sum[k] += pnm_get_component(img, i, j, k);
-            }
+    for (int k = 0; k < D; k++) {
+        sum[k] = 0;
+        for (int i = 0; i < size; i += D) {
+                sum[k] += *(data+i+k);
         }
     }
 
-    for (size_t i = 0; i < D; i++) {
-        res[D] = sum[D] / (rows * cols);
+    for (int i = 0; i < D; i++) {
+        res[D] = sum[D] / (size / D);
     }
 }
 
-static void standard_deviation(pnm img, float res[D]) {
+static void standard_deviation(float * data, int size, float res[D]) {
     float m[D];
-    mean(img, m);
+    mean(data, size, m);
 
     float square[D];
 
-    for (int i = 0; i < rows; i++) {
-        for (int j = 0; j < cols; j++) {
-            for (int k = 0; k < 3; k++) {
-                square[k] += pnm_get_component(img, i, j, k) * pnm_get_component(img, i, j, k);
-            }
+    for (int k = 0; k < D; k++) {
+        square[D] = 0;
+        for (int i = 0; i < size; i +=D) {
+                square[k] += *(data+i+k) * *(data+i+k);
         }
     }
 
     for (size_t i = 0; i < D; i++) {
-        res[D] = sqrtf((square[D] / (rows * cols)) - (m[D] * m[D]));
+        res[D] = sqrtf((square[D] / (size / D)) - (m[D] * m[D]));
     }
 }
 
@@ -87,22 +82,34 @@ static void prod_mat_vect(float mat[D][D], float vect[D], float res[D]){
         res[i] = 0;
         for (int j = 0; j < D; j++) {
             res[i] += mat[i][j] * vect[j];
-            // printf("res[%d] += mat[%d][%d] * vect[%d];\n", i, i, j, j);
-            // printf("%f %f %f\n", res[i] ,mat[i][j], vect[j]);
         }
-        // printf("vect[%4d] %5f  ==>  res[%4d] %5f\n",i , vect[i], i, res[i] );
-        // printf("\n");
-        // printf("#########################################""\n");
-        // printf("\n");
     }
 }
 
+void vect_log(float vect[D]) {
+    for (int i = 0; i < D; i++) {
+        vect[i] = logf(vect[i] + 1);
+    }
+}
+
+void vect_power(float vect[D]) {
+    for (int i = 0; i < D; i++) {
+        vect[i] = powf(10, vect[i]) - 1;
+    }
+}
+
+/**
+ * convertion usigned int --> float
+ */
 static void data_ustof(unsigned short *data_src, float *data_dst, int size){
     for (int i = 0; i < size; i++) {
         data_dst[i] = data_src[i];
     }
 }
 
+/**
+ * convertion float --> usigned int
+ */
 static void data_ftous(float *data_src, unsigned short *data_dst, int size){
     for (int i = 0; i < size; i++) {
         if (data_src[i] < 0) {
@@ -118,46 +125,80 @@ static void data_ftous(float *data_src, unsigned short *data_dst, int size){
 static void process(char * ims_name, char * imt_name, char * imd_name){
     pnm ims = pnm_load(ims_name);
     pnm imt = pnm_load(imt_name);
-    pnm imd = pnm_new(pnm_get_width(imt), pnm_get_height(imt), PnmRawPpm);
-    pnm ims_lms = pnm_new(pnm_get_width(ims), pnm_get_height(ims), PnmRawPpm);
+
+    int cols_ims = pnm_get_width(ims);
+    int rows_ims = pnm_get_height(imt);
+    int cols_imt = pnm_get_width(imt);
+    int rows_imt = pnm_get_height(imt);
+
+    pnm imd = pnm_new(cols_imt, rows_imt, PnmRawPpm);
+
+
+    int size_ims = rows_ims * cols_ims * D;
+    int size_imt = rows_imt * cols_imt * D;
+    unsigned short *data_ims = pnm_get_image(ims);
+    unsigned short *data_imt = pnm_get_image(imt);
+    unsigned short *data_imd = pnm_get_image(imd);
+
+    float *fdata_ims = malloc(sizeof(float) * size_ims);
+    float *fdata_imt = malloc(sizeof(float) * size_imt);
+    float *fdata_imd = malloc(sizeof(float) * size_imt);
+    float *fdata_ims_lms = malloc(sizeof(float) * size_ims);
+    float *fdata_imt_lms = malloc(sizeof(float) * size_imt);
+    float *fdata_imd_lms = malloc(sizeof(float) * size_imt);
+    float *fdata_ims_rab = malloc(sizeof(float) * size_ims);
+    float *fdata_imt_rab = malloc(sizeof(float) * size_imt);
+    float *fdata_imd_rab = malloc(sizeof(float) * size_imt);
+
 
     /*
     step 1 : RGB --> ραβ
     step 2 : stats
     step 3 : ραβ -> RGB
     */
-    int cols = pnm_get_width(ims);
-    int rows = pnm_get_height(ims);
-    int size = rows * cols * D;
-    unsigned short *data_ims = pnm_get_image(ims);
-    unsigned short *data_ims_lms = pnm_get_image(ims_lms);
-    unsigned short *data_imd = pnm_get_image(imd);
 
-    float *fdata_ims = malloc(sizeof(float) * size);
-    float *fdata_imd = malloc(sizeof(float) * size);
-    float *fdata_ims_lms = malloc(sizeof(float) * size);
+    /* step 1 */
+    data_ustof(data_ims, fdata_ims, size_ims);
+    data_ustof(data_imt, fdata_imt, size_imt);
 
-    data_ustof(data_ims, fdata_ims, size);
-
-
-    for (int i = 0; i < size; i+=D) {
-        // printf("%d\n", i);
+    for (int i = 0; i < size_ims; i += D) {
         prod_mat_vect(RGB2LMS, fdata_ims+i, fdata_ims_lms+i);
+        vect_log(fdata_ims_lms+i);
+        prod_mat_vect(LMS2RAB, fdata_ims_lms+i, fdata_ims_rab+i);
+    }
+
+    for (int i = 0; i < size_imt; i += D) {
+        prod_mat_vect(RGB2LMS, fdata_imt+i, fdata_imt_lms+i);
+        vect_log(fdata_imt_lms+i);
+        prod_mat_vect(LMS2RAB, fdata_imt_lms+i, fdata_imt_rab+i);
+    }
+
+    /* step 2 */
+    float mean_ims[D];
+    float sd_ims[D];
+    float sd_imt[D];
+
+    mean(fdata_ims_rab, size_ims, mean_ims);
+    standard_deviation(fdata_ims_rab, size_ims, sd_ims);
+    standard_deviation(fdata_imt_rab, size_imt, sd_imt);
+
+    for (int k = 0; k < D; k++) {
+        for (int i = 0; i < size_imt; i += D) {
+            *(fdata_imd_rab+i+k) = (sd_imt[k] / sd_ims[k]) * (*(fdata_ims_rab+i+k) - mean_ims[k]);
+        }
     }
 
 
+    /* step 3 */
+    for (int i = 0; i < size_imt; i+=D) {
+        prod_mat_vect(RAB2LMS, fdata_imd_rab+i, fdata_imd_lms+i);
+        vect_power(fdata_imd_lms+i);
+        prod_mat_vect(LMS2RGB, fdata_imd_lms+i, fdata_imd+i);
+    }
 
-    // for (int i = 0; i < size; i+=D) {
-    //     prod_mat_vect(LMS2RGB, fdata_ims_lms+i, fdata_imd+i);
-    // }
+    data_ftous(fdata_imd, data_imd, size_imt);
 
-    data_ftous(fdata_ims, data_ims, size);
-    data_ftous(fdata_ims_lms, data_ims_lms, size);
-    // data_ftous(fdata_imd, data_imd, size);
-
-    pnm_save(ims, PnmRawPpm, "rgb.ppm");
-    pnm_save(ims_lms, PnmRawPpm, "lms.ppm");
-    // pnm_save(imd, PnmRawPpm, imd_name);
+    pnm_save(imd, PnmRawPpm, imd_name);
 
     pnm_free(ims);
     pnm_free(imt);
