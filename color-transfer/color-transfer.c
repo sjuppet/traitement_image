@@ -42,6 +42,7 @@ static float RAB2LMS[D][D] = {
 
 static void mean(float * data, int size, float res[D]) {
     float sum[D];
+    int s = size / D;
 
     for (int k = 0; k < D; k++) {
         sum[k] = 0;
@@ -51,7 +52,7 @@ static void mean(float * data, int size, float res[D]) {
     }
 
     for (int i = 0; i < D; i++) {
-        res[D] = sum[D] / (size / D);
+        res[i] = sum[i] / s;
     }
 }
 
@@ -60,6 +61,7 @@ static void standard_deviation(float * data, int size, float res[D]) {
     mean(data, size, m);
 
     float square[D];
+    int s = size / D;
 
     for (int k = 0; k < D; k++) {
         square[D] = 0;
@@ -69,7 +71,7 @@ static void standard_deviation(float * data, int size, float res[D]) {
     }
 
     for (size_t i = 0; i < D; i++) {
-        res[D] = sqrtf((square[D] / (size / D)) - (m[D] * m[D]));
+        res[i] = sqrtf((square[i] / s) - (m[i] * m[i]));
     }
 }
 
@@ -184,7 +186,7 @@ static void process(char * ims_name, char * imt_name, char * imd_name){
 
     for (int k = 0; k < D; k++) {
         for (int i = 0; i < size_imt; i += D) {
-            *(fdata_imd_rab+i+k) = (sd_imt[k] / sd_ims[k]) * (*(fdata_ims_rab+i+k) - mean_ims[k]);
+            *(fdata_imd_rab+i+k) = (sd_imt[k] / sd_ims[k]) * (*(fdata_imt_rab+i+k) - mean_ims[k]);
         }
     }
 
@@ -199,6 +201,16 @@ static void process(char * ims_name, char * imt_name, char * imd_name){
     data_ftous(fdata_imd, data_imd, size_imt);
 
     pnm_save(imd, PnmRawPpm, imd_name);
+
+    free(fdata_ims);
+    free(fdata_imt);
+    free(fdata_imd);
+    free(fdata_ims_lms);
+    free(fdata_imt_lms);
+    free(fdata_imd_lms);
+    free(fdata_ims_rab);
+    free(fdata_imt_rab);
+    free(fdata_imd_rab);
 
     pnm_free(ims);
     pnm_free(imt);
