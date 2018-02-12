@@ -56,17 +56,14 @@ static void mean(float * data, int size, float res[D]) {
     }
 }
 
-static void standard_deviation(float * data, int size, float res[D]) {
-    float m[D];
-    mean(data, size, m);
-
+static void standard_deviation(float * data, int size, float m[D], float res[D]) {
     float square[D];
     int s = size / D;
 
     for (int k = 0; k < D; k++) {
         square[D] = 0;
         for (int i = 0; i < size; i +=D) {
-                square[k] += *(data+i+k) * *(data+i+k);
+                square[k] += powf(*(data+i+k), 2);
         }
     }
 
@@ -90,7 +87,7 @@ static void prod_mat_vect(float mat[D][D], float vect[D], float res[D]){
 
 void vect_log(float vect[D]) {
     for (int i = 0; i < D; i++) {
-        vect[i] = logf(vect[i] + 1);
+        vect[i] = logf(vect[i] + 1) / logf(10);
     }
 }
 
@@ -177,18 +174,23 @@ static void process(char * ims_name, char * imt_name, char * imd_name){
 
     /* step 2 */
     float mean_ims[D];
+    float mean_imt[D];
     float sd_ims[D];
     float sd_imt[D];
 
     mean(fdata_ims_rab, size_ims, mean_ims);
-    standard_deviation(fdata_ims_rab, size_ims, sd_ims);
-    standard_deviation(fdata_imt_rab, size_imt, sd_imt);
+    mean(fdata_imt_rab, size_imt, mean_imt);
+    standard_deviation(fdata_ims_rab, size_ims, mean_ims, sd_ims);
+    standard_deviation(fdata_imt_rab, size_imt, mean_imt, sd_imt);
 
     for (int k = 0; k < D; k++) {
         for (int i = 0; i < size_imt; i += D) {
-            *(fdata_imd_rab+i+k) = (sd_imt[k] / sd_ims[k]) * (*(fdata_imt_rab+i+k) - mean_ims[k]);
+            *(fdata_imd_rab+i+k) = ((sd_imt[k] / sd_ims[k])
+                                 * (*(fdata_imt_rab+i+k) - mean_imt[k]))
+                                 + mean_ims[k];
         }
     }
+
 
 
     /* step 3 */
