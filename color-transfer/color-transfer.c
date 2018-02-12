@@ -40,6 +40,29 @@ static float RAB2LMS[D][D] = {
     {sqrtf(3)/3, -sqrtf(6)/3, 0}
 };
 
+
+void normalize(int min, int max, float *data, int size){
+    float max_I = *data;
+    float min_I = *data;
+
+    for (int i = 0; i < size; i++) {
+        if (data[i] < min_I) {
+            min_I = data[i];
+        }
+        if (data[i] > max_I) {
+            max_I = data[i];
+        }
+    }
+
+
+    for(int i = 0; i < size; i++){
+        data[i] = ((double)max - min) / (max_I - min_I) * data[i] +
+        ((double)min * max_I - max * min_I) / (max_I - min_I);
+    }
+}
+
+
+
 static void mean(float * data, int size, float res[D]) {
     float sum[D];
     int s = size / D;
@@ -47,7 +70,7 @@ static void mean(float * data, int size, float res[D]) {
     for (int k = 0; k < D; k++) {
         sum[k] = 0;
         for (int i = 0; i < size; i += D) {
-                sum[k] += *(data+i+k);
+            sum[k] += *(data+i+k);
         }
     }
 
@@ -56,26 +79,22 @@ static void mean(float * data, int size, float res[D]) {
     }
 }
 
+
 static void standard_deviation(float * data, int size, float m[D], float res[D]) {
-    float square[D];
     int s = size / D;
-
-    for (int k = 0; k < D; k++) {
-        square[D] = 0;
-        for (int i = 0; i < size; i +=D) {
-                square[k] += powf(*(data+i+k), 2);
+    for (int i = 0; i < D; i++) {
+        float sum = 0;
+        for(int j = 0; j < size; j++){
+            sum += powf(data[j * 3 + i] - m[i], 2);
         }
-    }
-
-    for (size_t i = 0; i < D; i++) {
-        res[i] = sqrtf((square[i] / s) - (m[i] * m[i]));
+        res[i] =  sqrtf(sum/s);
     }
 }
 
 
 /**
- * produit matrice vecteur dans res
- */
+* produit matrice vecteur dans res
+*/
 static void prod_mat_vect(float mat[D][D], float vect[D], float res[D]){
     for (int i = 0; i < D; i++) {
         res[i] = 0;
@@ -87,7 +106,7 @@ static void prod_mat_vect(float mat[D][D], float vect[D], float res[D]){
 
 void vect_log(float vect[D]) {
     for (int i = 0; i < D; i++) {
-        vect[i] = logf(vect[i] + 1) / logf(10);
+        vect[i] = log10(vect[i] + 1);
     }
 }
 
@@ -98,8 +117,8 @@ void vect_power(float vect[D]) {
 }
 
 /**
- * convertion usigned int --> float
- */
+* convertion usigned int --> float
+*/
 static void data_ustof(unsigned short *data_src, float *data_dst, int size){
     for (int i = 0; i < size; i++) {
         data_dst[i] = data_src[i];
@@ -107,16 +126,17 @@ static void data_ustof(unsigned short *data_src, float *data_dst, int size){
 }
 
 /**
- * convertion float --> usigned int
- */
+* convertion float --> usigned int
+*/
 static void data_ftous(float *data_src, unsigned short *data_dst, int size){
     for (int i = 0; i < size; i++) {
-        if (data_src[i] < 0) {
+
+        if (data_src[i] <= 0.0) {
             data_dst[i] = 0;
-        } else if (data_src[i] > 255) {
+        } else if (data_src[i] >= 255.0) {
             data_dst[i] = 255;
         } else {
-            data_dst[i] = data_src[i];
+            data_dst[i] = floor(data_src[i]);
         }
     }
 }
@@ -126,7 +146,7 @@ static void process(char * ims_name, char * imt_name, char * imd_name){
     pnm imt = pnm_load(imt_name);
 
     int cols_ims = pnm_get_width(ims);
-    int rows_ims = pnm_get_height(imt);
+    int rows_ims = pnm_get_height(ims);
     int cols_imt = pnm_get_width(imt);
     int rows_imt = pnm_get_height(imt);
 
@@ -183,11 +203,11 @@ static void process(char * ims_name, char * imt_name, char * imd_name){
     standard_deviation(fdata_ims_rab, size_ims, mean_ims, sd_ims);
     standard_deviation(fdata_imt_rab, size_imt, mean_imt, sd_imt);
 
-    for (int k = 0; k < D; k++) {
-        for (int i = 0; i < size_imt; i += D) {
+    for (int i = 0; i < size_imt; i += D) {
+        for (int k = 0; k < D; k++) {
             *(fdata_imd_rab+i+k) = ((sd_imt[k] / sd_ims[k])
-                                 * (*(fdata_imt_rab+i+k) - mean_imt[k]))
-                                 + mean_ims[k];
+            * (*(fdata_imt_rab+i+k) - mean_imt[k]))
+            + mean_ims[k];
         }
     }
 
@@ -199,9 +219,8 @@ static void process(char * ims_name, char * imt_name, char * imd_name){
         vect_power(fdata_imd_lms+i);
         prod_mat_vect(LMS2RGB, fdata_imd_lms+i, fdata_imd+i);
     }
-
+    normalize(0, 255, fdata_imd, size_imt);
     data_ftous(fdata_imd, data_imd, size_imt);
-
     pnm_save(imd, PnmRawPpm, imd_name);
 
     free(fdata_ims);
