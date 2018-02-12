@@ -1,0 +1,6 @@
+colorization_swatchez <ims> <imt> swatches.tct> <imd>
+
+swatches.txt:
+    1. is js hs ws it jt ht wt
+    2. is js hs ws it jt ht wt
+    3. ...
