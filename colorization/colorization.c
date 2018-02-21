@@ -13,7 +13,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <time.h>
 #include <bcl.h>
 
 #define D 3
@@ -43,6 +43,10 @@ void apply_mul_value_buffer(float *buf, float value, int canal, int size);
 float get_max_value(float *buf, int l);
 float get_min_value(float *buf, int l);
 void normalize(int max, int min, float *buf, int l);
+float get_neighborhood_standard_deviation(pnm img_src, float *data,int i,int j);
+struct sample matching_sample(pnm img_t, float *data_t, int i, int j,
+                              struct sample **samples, int nb_samples,
+                              float sdl_max, float l_max);
 
 float RGB2LMS[D][D] = {
     {0.3811, 0.5783, 0.0402},
@@ -253,7 +257,8 @@ struct sample matching_sample(pnm img_t, float *data_t, int i, int j, struct sam
     int i_min;
     float l = data_t[pnm_offset(img_t, i, j)];
     float sdl_t = get_neighborhood_standard_deviation(img_t, data_t, i, j);
-    for (size_t ii = 0; ii < nb_samples; ii++) {
+    for (int ii = 0; ii < nb_samples; ii++) {
+        //compute distance in a normalized vector space (luminance,neighborhood_standard_deviation)
         float d = pow(l - samples[ii]->l, 2) + pow((sdl_t - samples[ii]->standard_deviation) * l_max/sdl_max, 2);
         if (ii == 0) {
             dist_min = d;
@@ -310,7 +315,7 @@ process(char *ims, char *imt, char* imd){
     ****************************/
 
     struct sample **samples = malloc(sizeof(struct sample*) * NB_SAMPLES_EXPECTED);
-    for (size_t i = 0; i < NB_SAMPLES_EXPECTED; i++) {
+    for (int i = 0; i < NB_SAMPLES_EXPECTED; i++) {
         samples[i] = malloc(sizeof(struct sample));
     }
     int p = 0;
@@ -319,22 +324,27 @@ process(char *ims, char *imt, char* imd){
 
 
     float r = (float)h_src / w_src;
-
+    //compute the real number of samples
     int nb_samples_w = sqrt(NB_SAMPLES_EXPECTED/r);
     int nb_samples_h = r * nb_samples_w;
     int nb_samples = nb_samples_h * nb_samples_w;
-
+    //division of the image in nb_sample rectangles
     int samples_w = w_src/nb_samples_w;
     int samples_h = h_src/nb_samples_h;
-
+    srand(time(NULL));
+    int i_rand, j_rand;;
     for (int i = 0; i < nb_samples_h; i++) {
         for (int j = 0; j < nb_samples_w; j++) {
-            // TODO prendre des trucs random
-            int index = pnm_offset(img_src, i*samples_h, j*samples_w);
+            //random selection in a rectangle
+            i_rand = rand()%samples_h;
+            j_rand = rand()%samples_w;
+            int index = pnm_offset(img_src, i*samples_h + i_rand, j*samples_w + j_rand);
+            //filling the sample
             samples[p]->l = buf_src[index];
             samples[p]->a = buf_src[index+1];
             samples[p]->b = buf_src[index+2];
             samples[p]->standard_deviation = get_neighborhood_standard_deviation(img_src, buf_src, i*samples_h, j*samples_w);
+            //compute neighbourhood standard_deviation max and luminance max for later (normalization in matching_sample)
             if (sdl_max < samples[p]->standard_deviation) {
                 sdl_max = samples[p]->standard_deviation;
             }
@@ -348,7 +358,7 @@ process(char *ims, char *imt, char* imd){
     /*
     * 2-
     * matching each imt's pixels
-    * with the best of NB_SAMPLES_EXPECTED samples
+    * with the best  sample
     * and transfert chromatic ims to imd
     */
 

@@ -1,6 +1,14 @@
-colorization_swatchez <ims> <imt> swatches.tct> <imd>
+colorization_swatches <ims> <imt> swatches.txt> <imd>
 
 swatches.txt:
     1. is js hs ws it jt ht wt
     2. is js hs ws it jt ht wt
     3. ...
+
+
+Etape 1:
+Effectuer la colorisation des swatches de l'image cible à partir des swatches de l'image source correspondants.
+Le principe est le même que pour la colorisation sans swatches, il est conseillé d'utiliser la technique "random jittered sampling" avec 50 échantillons par swatch.
+
+Etape 2:
+Effectuer la colorisation du reste de l'image à partir des swatches déjà colorés. Le matching entre un pixel à coloriser et un un pixel colorisé se fait en minimisant la distance euclidienne dans un certain espace vectoriel. Dans l'espace vectoriel en question, les coordonnées d'un point représentent les luminances d'un pixel et de ses voisins, pour les pixels non-colorisé la luminance sera le niveau de gris. Cet espace est donc de dimension 25 maximum si on considère un voisinage de 5 par 5 pixels.
