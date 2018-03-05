@@ -5,6 +5,7 @@
  */
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include <fft.h>
 
@@ -16,7 +17,32 @@ void
 test_forward_backward(char* name)
 {
   fprintf(stderr, "test_forward_backward: ");
-  (void)name;
+
+  pnm img = pnm_load(name);
+  int rows = pnm_get_height(img);
+  int cols = pnm_get_width(img);
+  unsigned short * data_in = pnm_get_image(img);
+  //char * FB_name = "";
+
+  fftw_complex * transition = forward(rows, cols, data_in);
+  unsigned short * data_out = backward(rows, cols, transition);
+
+  for (int i = 0; i < rows * cols; i++) {
+        data_in[i] = data_out[i];
+  }
+/*
+  int i = strlen(name) - 1;
+  char * a = "";
+  while (name[i] != '/') {
+    strcat(a, FB_name);
+  }
+  strcat("FB-", FB_name);
+*/
+  pnm_save(img, PnmRawPpm, "FB_name.ppm");
+
+  free(transition);
+  free(data_out);
+  free(img);
   fprintf(stderr, "OK\n");
 }
 
@@ -46,7 +72,7 @@ test_display(char* name)
 
 /**
  * @brief test the modification of magnitude by adding a periodic functions
-          on both vertical and horizontal axis, and 
+          on both vertical and horizontal axis, and
  *        construct output images
  * @param char* name, the input image file name
  */
@@ -68,7 +94,7 @@ run(char* name)
   test_add_frequencies(name);
 }
 
-void 
+void
 usage(const char *s)
 {
   fprintf(stderr, "Usage: %s <ims> \n", s);
@@ -76,7 +102,7 @@ usage(const char *s)
 }
 
 #define PARAM 1
-int 
+int
 main(int argc, char *argv[])
 {
   if (argc != PARAM+1) usage(argv[0]);
