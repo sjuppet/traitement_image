@@ -21,28 +21,35 @@ test_forward_backward(char* name)
   pnm img = pnm_load(name);
   int rows = pnm_get_height(img);
   int cols = pnm_get_width(img);
-  unsigned short * data_in = pnm_get_image(img);
-  //char * FB_name = "";
+  unsigned short * data_in = pnm_get_channel(img, NULL, 0);
+  unsigned short * data_out;
+  fftw_complex * transition;
+  //char * FB_name = "FB-";
 
-  fftw_complex * transition = forward(rows, cols, data_in);
-  unsigned short * data_out = backward(rows, cols, transition);
+  transition = forward(rows, cols, data_in);
+  data_out = backward(rows, cols, transition);
 
   for (int i = 0; i < rows * cols; i++) {
         data_in[i] = data_out[i];
   }
-/*
-  int i = strlen(name) - 1;
-  char * a = "";
-  while (name[i] != '/') {
-    strcat(a, FB_name);
+
+  for (int k = 0; k < 3; k++) {
+    pnm_set_channel(img, data_out, k);
   }
-  strcat("FB-", FB_name);
-*/
-  pnm_save(img, PnmRawPpm, "FB_name.ppm");
+
+  //int i = strlen(name) - 1;
+  //while ((name[i] != '/') && (i > 0)) {
+  //  i--;
+  //}
+  //FB_name = strcat(FB_name, name + i);
+
+  pnm_save(img, PnmRawPpm, "FB-name.ppm");
 
   free(transition);
   free(data_out);
-  free(img);
+  free(data_in);
+  pnm_free(img);
+
   fprintf(stderr, "OK\n");
 }
 
@@ -54,7 +61,47 @@ void
 test_reconstruction(char* name)
 {
   fprintf(stderr, "test_reconstruction: ");
-  (void)name;
+
+    pnm img = pnm_load(name);
+    int rows = pnm_get_height(img);
+    int cols = pnm_get_width(img);
+    unsigned short * data_in = pnm_get_channel(img, NULL, 0);
+    unsigned short * data_out;
+    float * as = malloc(rows * cols * sizeof(float));
+    float * ps = malloc(rows * cols * sizeof(float));
+    fftw_complex * freq_repr_in;
+    fftw_complex * freq_repr_out = malloc(cols * rows * sizeof(fftw_complex));
+  //  char * FB_name = "FB-ASPS-";
+
+    freq_repr_in = forward(rows, cols, data_in);
+    freq2spectra(rows, cols, freq_repr_in, as, ps);
+    spectra2freq(rows, cols, as, ps, freq_repr_out);
+    data_out = backward(rows, cols, freq_repr_out);
+
+    for (int i = 0; i < rows * cols; i++) {
+          data_in[i] = data_out[i];
+    }
+
+    for (int k = 0; k < 3; k++) {
+      pnm_set_channel(img, data_out, k);
+    }
+
+  //  int i = strlen(name) - 1;
+  //  while ((name[i] != '/') && (i > 0)) {
+  //    i--;
+  //  }
+  //  FB_name = strcat(FB_name, name + i);
+
+    pnm_save(img, PnmRawPpm, "FB-ASPS-name.ppm");
+
+    free(freq_repr_out);
+    free(freq_repr_in);
+    free(ps);
+    free(as);
+    free(data_out);
+    free(data_in);
+    pnm_free(img);
+
   fprintf(stderr, "OK\n");
 }
 

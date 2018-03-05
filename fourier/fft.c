@@ -4,9 +4,9 @@
 
 #include <fft.h>
 
-fftw_complex *
-forward(int rows, int cols, unsigned short* g_img)
-{
+#define PI 3.14159265359
+
+fftw_complex * forward(int rows, int cols, unsigned short* g_img) {
   int size = rows * cols;
   fftw_complex * c_in = malloc(size * sizeof(fftw_complex));
   fftw_complex * c_out = malloc(size * sizeof(fftw_complex));
@@ -40,22 +40,41 @@ unsigned short * backward(int rows, int cols, fftw_complex * freq_repr) {
   return img;
 }
 
-void
-freq2spectra(int rows, int cols, fftw_complex* freq_repr, float* as, float* ps)
-{
-  (void)rows;
-  (void)cols;
-  (void)freq_repr;
-  (void)as;
-  (void)ps;
+void freq2spectra(int rows, int cols, fftw_complex* freq_repr, float* as, float* ps) {
+  float re_square;
+  float im_square;
+  float re;
+  float im;
+
+  for (int i = 0; i < cols * rows; i++) {
+    re = creal(freq_repr[i]);
+    im = cimag(freq_repr[i]);
+    re_square = re * re;
+    im_square = im * im;
+
+    as[i] = sqrtf(re_square + im_square);
+
+    if (re == 0) {
+      if (im > 0) {
+        ps[i] = PI / 2;
+      }
+      if (im < 0) {
+        ps[i] = -PI / 2;
+      }
+      if (im == 0) {
+        ps[i] = 0;
+      }
+    } else {
+      ps[i] = atanf(im / re);
+    }
+  }
 }
+
 
 void
 spectra2freq(int rows, int cols, float* as, float* ps, fftw_complex* freq_repr)
 {
-  (void)rows;
-  (void)cols;
-  (void)as;
-  (void)ps;
-  (void)freq_repr;
+  for (int i = 0; i < rows * cols; i++) {
+    freq_repr[i] = as[i] * cosf(ps[i]) + I * as[i] * sinf(ps[i]);
+  }
 }
