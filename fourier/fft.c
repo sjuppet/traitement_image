@@ -53,20 +53,7 @@ void freq2spectra(int rows, int cols, fftw_complex* freq_repr, float* as, float*
     im_square = im * im;
 
     as[i] = sqrtf(re_square + im_square);
-
-    if (re == 0) {
-      if (im > 0) {
-        ps[i] = PI / 2;
-      }
-      if (im < 0) {
-        ps[i] = -PI / 2;
-      }
-      if (im == 0) {
-        ps[i] = 0;
-      }
-    } else {
-      ps[i] = atanf(im / re);
-    }
+    ps[i] = atan2f(im, re);
   }
 }
 
