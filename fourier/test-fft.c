@@ -171,7 +171,6 @@ test_display(char* name)
   free(data_in);
   pnm_free(img);
 
-(void)name;
   fprintf(stderr, "OK\n");
 }
 
@@ -186,7 +185,74 @@ void
 test_add_frequencies(char* name)
 {
   fprintf(stderr, "test_add_frequencies: ");
-  (void)name;
+
+  pnm img = pnm_load(name);
+  int rows = pnm_get_height(img);
+  int cols = pnm_get_width(img);
+  unsigned short * data_in = pnm_get_channel(img, NULL, 0);
+  unsigned short * data_out;
+
+  float * as = malloc(rows * cols * sizeof(float));
+  float * ps = malloc(rows * cols * sizeof(float));
+  fftw_complex * freq_repr_in;
+  freq_repr_in = forward(rows, cols, data_in);
+  fftw_complex * freq_repr_out = malloc(cols * rows * sizeof(fftw_complex));
+  freq2spectra(rows, cols, freq_repr_in, as, ps);
+
+  unsigned short *channel_as = malloc(rows * cols * sizeof(unsigned short));
+  unsigned short *channel_ps = malloc(rows * cols * sizeof(unsigned short));
+
+  float max = as[0];
+  for (int i = 0; i < rows * cols; i++) {
+    if(as[i] > max){
+      max = as[i];
+    }
+  }
+
+  as[ (rows / 2 - 8) * cols + cols /2 ] = 0.25 * max;
+  as[ (rows / 2 + 8) * cols + cols /2 ] = 0.25 * max;
+  as[ rows / 2 * cols + rows /2 + 8] = 0.25 * max;
+  as[ rows / 2 * cols + rows /2 - 8] = 0.25 * max;
+
+  for (int i = 0; i < rows * cols; i++) {
+    as[i] = pnm_maxval * pow(as[i] / max, 0.1);
+    channel_as[i] = (unsigned short) as[i];
+    channel_ps[i] = (unsigned short) ps[i];
+  }
+
+  spectra2freq(rows, cols, as, ps, freq_repr_out);
+  data_out = backward(rows, cols, freq_repr_out);
+
+  for (int i = 0; i < rows * cols; i++) {
+        data_in[i] = data_out[i];
+  }
+
+  pnm img_amp = pnm_dup(img);
+
+  for (int k = 0; k < 3; k++) {
+    pnm_set_channel(img_amp, channel_as, k);
+    pnm_set_channel(img, data_out, k);
+  }
+
+  char filename[50], FAS_name[50], FREQ_name[50];
+  strcpy(filename, basename(name));
+  strcpy(FAS_name, "FAS-");
+  strcpy(FREQ_name, "FREQ-");
+  strcat(FAS_name, filename);
+  strcat(FREQ_name, filename);
+
+  pnm_save(img_amp, PnmRawPpm, FAS_name);
+  pnm_save(img, PnmRawPpm, FREQ_name);
+
+  pnm_free(img_amp);
+  free(channel_ps);
+  free(channel_as);
+  free(freq_repr_in);
+  free(ps);
+  free(as);
+  free(data_in);
+  pnm_free(img);
+
   fprintf(stderr, "OK\n");
 }
 
