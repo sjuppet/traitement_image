@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 #include <libgen.h>
 #include <fft.h>
 
@@ -89,11 +90,6 @@ test_reconstruction(char* name)
       pnm_set_channel(img, data_out, k);
     }
 
-  //  int i = strlen(name) - 1;
-  //  while ((name[i] != '/') && (i > 0)) {
-  //    i--;
-  //  }
-  //  FB_name = strcat(FB_name, name + i);
     char filename[50], ASPS_name[50];
     strcpy(filename, basename(name));
     strcpy(ASPS_name, "ASPS-");
@@ -120,50 +116,61 @@ test_display(char* name)
 {
   fprintf(stderr, "test_display: ");
 
-/*
   pnm img = pnm_load(name);
   int rows = pnm_get_height(img);
   int cols = pnm_get_width(img);
   unsigned short * data_in = pnm_get_channel(img, NULL, 0);
 
-  for (int i = 0; i < rows * cols; i++) {
-    if(i%2 != 0){
-      data_in = -1 * data_in;
-    }
-  }
-
   float * as = malloc(rows * cols * sizeof(float));
   float * ps = malloc(rows * cols * sizeof(float));
   fftw_complex * freq_repr_in;
-
   freq_repr_in = forward(rows, cols, data_in);
   freq2spectra(rows, cols, freq_repr_in, as, ps);
+
+  unsigned short *channel_as = malloc(rows * cols * sizeof(unsigned short));
+  unsigned short *channel_ps = malloc(rows * cols * sizeof(unsigned short));
+
+  float max = as[0];
   for (int i = 0; i < rows * cols; i++) {
-    as[i] = log(1 + as[i]);
+    if(as[i] > max){
+      max = as[i];
+    }
+  }
+
+  for (int i = 0; i < rows * cols; i++) {
+    as[i] = pnm_maxval * pow(as[i] / max, 0.1);
+    channel_as[i] = (unsigned short) as[i];
+    channel_ps[i] = (unsigned short) ps[i];
   }
 
   pnm img_freq = pnm_dup(img);
   pnm img_amp = pnm_dup(img);
 
-  for (int i = 0; i < rows * cols; i++) {
-    for (int k = 0; k < 3; k++) {
-      pnm_set_channel(img_freq, ps, k);
-      pnm_set_channel(img_amp, as, k);
-    }
+  for (int k = 0; k < 3; k++) {
+    pnm_set_channel(img_amp, channel_as, k);
+    pnm_set_channel(img_freq, channel_ps, k);
   }
 
-  pnm_save(img_freq, PnmRawPpm, "PS-name.ppm");
-  pnm_save(img_amp, PnmRawPpm, "AS-name.ppm");
+  char filename[50], AS_name[50], PS_name[50];
+  strcpy(filename, basename(name));
+  strcpy(AS_name, "AS-");
+  strcpy(PS_name, "PS-");
+  strcat(AS_name, filename);
+  strcat(PS_name, filename);
+
+  pnm_save(img_amp, PnmRawPpm, AS_name);
+  pnm_save(img_freq, PnmRawPpm, PS_name);
 
   pnm_free(img_amp);
   pnm_free(img_freq);
+  free(channel_ps);
+  free(channel_as);
   free(freq_repr_in);
   free(ps);
   free(as);
   free(data_in);
   pnm_free(img);
 
-*/
 (void)name;
   fprintf(stderr, "OK\n");
 }
