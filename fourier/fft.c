@@ -68,6 +68,7 @@ unsigned short * backward(int rows, int cols, fftw_complex * freq_repr) {
   fftw_destroy_plan(plan);
   free(float_img);
   free(c_out);
+  fftw_cleanup();
   return img;
 }
 
