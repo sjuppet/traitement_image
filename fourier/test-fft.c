@@ -214,17 +214,13 @@ test_add_frequencies(char* name)
   as[ rows / 2 * cols + rows /2 + 8] = 0.25 * max;
   as[ rows / 2 * cols + rows /2 - 8] = 0.25 * max;
 
-  for (int i = 0; i < rows * cols; i++) {
-    as[i] = pnm_maxval * pow(as[i] / max, 0.1);
-    channel_as[i] = (unsigned short) as[i];
-    channel_ps[i] = (unsigned short) ps[i];
-  }
-
   spectra2freq(rows, cols, as, ps, freq_repr_out);
   data_out = backward(rows, cols, freq_repr_out);
 
   for (int i = 0; i < rows * cols; i++) {
-        data_in[i] = data_out[i];
+    as[i] = pnm_maxval * pow(as[i] / max, 0.1);
+    channel_as[i] = (unsigned short) as[i];
+    channel_ps[i] = (unsigned short) ps[i];
   }
 
   pnm img_amp = pnm_dup(img);
