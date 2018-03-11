@@ -26,7 +26,6 @@ test_forward_backward(char* name)
   unsigned short * data_in = pnm_get_channel(img, NULL, 0);
   unsigned short * data_out;
   fftw_complex * transition;
-  //char * FB_name = "FB-";
 
   transition = forward(rows, cols, data_in);
   data_out = backward(rows, cols, transition);
@@ -34,11 +33,7 @@ test_forward_backward(char* name)
   for (int k = 0; k < 3; k++) {
     pnm_set_channel(img, data_out, k);
   }
-  //int i = strlen(name) - 1;
-  //while ((name[i] != '/') && (i > 0)) {
-  //  i--;
-  //}
-  //FB_name = strcat(FB_name, name + i);
+
   char filename[50], FB_name[50];
   strcpy(filename, basename(name));
   strcpy(FB_name, "FB-");
@@ -71,7 +66,6 @@ test_reconstruction(char* name)
     float * ps = malloc(rows * cols * sizeof(float));
     fftw_complex * freq_repr_in;
     fftw_complex * freq_repr_out = malloc(cols * rows * sizeof(fftw_complex));
-  //  char * FB_name = "FB-ASPS-";
 
     freq_repr_in = forward(rows, cols, data_in);
     freq2spectra(rows, cols, freq_repr_in, as, ps);
@@ -122,15 +116,20 @@ test_display(char* name)
   unsigned short *channel_as = malloc(rows * cols * sizeof(unsigned short));
   unsigned short *channel_ps = malloc(rows * cols * sizeof(unsigned short));
 
-  float max = as[0];
+  float max_as = as[0];
+  float max_ps = ps[0];
   for (int i = 0; i < rows * cols; i++) {
-    if(as[i] > max){
-      max = as[i];
+    if (as[i] > max_as) {
+      max_as = as[i];
+    }
+    if (ps[i] > max_ps) {
+      max_ps = ps[i];
     }
   }
 
   for (int i = 0; i < rows * cols; i++) {
-    as[i] = pnm_maxval * pow(as[i] / max, 0.1);
+    as[i] = pnm_maxval * pow(as[i] / max_as, 0.1);
+    ps[i] = pnm_maxval * pow(ps[i] / max_ps, 0.1);
     channel_as[i] = (unsigned short) as[i];
     channel_ps[i] = (unsigned short) ps[i];
   }
