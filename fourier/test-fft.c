@@ -31,10 +31,6 @@ test_forward_backward(char* name)
   transition = forward(rows, cols, data_in);
   data_out = backward(rows, cols, transition);
 
-  for (int i = 0; i < rows * cols; i++) {
-        data_in[i] = data_out[i];
-  }
-
   for (int k = 0; k < 3; k++) {
     pnm_set_channel(img, data_out, k);
   }
@@ -81,10 +77,6 @@ test_reconstruction(char* name)
     freq2spectra(rows, cols, freq_repr_in, as, ps);
     spectra2freq(rows, cols, as, ps, freq_repr_out);
     data_out = backward(rows, cols, freq_repr_out);
-
-    for (int i = 0; i < rows * cols; i++) {
-          data_in[i] = data_out[i];
-    }
 
     for (int k = 0; k < 3; k++) {
       pnm_set_channel(img, data_out, k);
@@ -153,12 +145,13 @@ test_display(char* name)
 
   char filename[50], AS_name[50], PS_name[50];
   strcpy(filename, basename(name));
-  strcpy(AS_name, "AS-");
-  strcpy(PS_name, "PS-");
-  strcat(AS_name, filename);
-  strcat(PS_name, filename);
 
+  strcpy(AS_name, "AS-");
+  strcat(AS_name, filename);
   pnm_save(img_amp, PnmRawPpm, AS_name);
+
+  strcpy(PS_name, "PS-");
+  strcat(PS_name, filename);
   pnm_save(img_freq, PnmRawPpm, PS_name);
 
   pnm_free(img_amp);
@@ -232,20 +225,23 @@ test_add_frequencies(char* name)
 
   char filename[50], FAS_name[50], FREQ_name[50];
   strcpy(filename, basename(name));
-  strcpy(FAS_name, "FAS-");
-  strcpy(FREQ_name, "FREQ-");
-  strcat(FAS_name, filename);
-  strcat(FREQ_name, filename);
 
+  strcpy(FAS_name, "FAS-");
+  strcat(FAS_name, filename);
   pnm_save(img_amp, PnmRawPpm, FAS_name);
+
+  strcpy(FREQ_name, "FREQ-");
+  strcat(FREQ_name, filename);
   pnm_save(img, PnmRawPpm, FREQ_name);
 
   pnm_free(img_amp);
   free(channel_ps);
   free(channel_as);
+  free(freq_repr_out);
   free(freq_repr_in);
   free(ps);
   free(as);
+  free(data_out);
   free(data_in);
   pnm_free(img);
 
