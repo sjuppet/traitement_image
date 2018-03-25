@@ -6,79 +6,86 @@
 
 #define D 3
 
-unsigned short box(float x) {
+float box(float x) {
   if ((x < 0.5) && (x >= -0.5)) {
     return 1;
   }
   return 0;
 }
 
-unsigned short tent(float x) {
+float tent(float x) {
   if (fabs(x) <= 1) {
     return 1 - fabs(x);
   }
   return 0;
 }
 
-unsigned short bell(float x) {
+float bell(float x) {
   if (fabs(x) <= 0.5) {
     return 0.75 - x * x;
   }
-  if ((fabs(x) > 0.5) && (fabs(x) <= 1.5)) {
+  else if ((fabs(x) > 0.5) && (fabs(x) <= 1.5)) {
     return (fabs(x) - 1.5) * (fabs(x) - 1.5) * 0.5;
+  } else {
+    return 0;
   }
-  return 0;
 }
 
-unsigned short mitch(float x) {
+float mitch(float x) {
   if (fabs(x) <= 1) {
     return 1.166666667*powf(fabs(x), 3) - 2*x*x + 0.888888889;
   }
-  if ((fabs(x) >= 1) && (fabs(x) <= 2)) {
+  else if ((fabs(x) > 1) && (fabs(x) <= 2)) {
     return -0.388888889*powf(fabs(x), 3) + 2*x*x - 3.333333333*fabs(x) + 1.777777778;
+  } else {
+    return 0;
   }
-  return 0;
 }
 
 pnm apply_filter(int factor, int WF, pnm ims, int rows, int cols) {
   int fcols = factor * cols;
   pnm imd = pnm_new(fcols, rows, PnmRawPpm);
 
-  int left, right;
+  float left, right;
   float j;
-  unsigned short S;
+  float S;
   for (int i = 0; i < rows; i++) {
     for (int j_imd = 0; j_imd < fcols; j_imd++) {
       j = j_imd / factor;
       left = j - WF;
       right = j + WF;
       S = 0;
-      if (left < 0) {
-        left = 0;
-      }
-      if (right >= cols) {
-        right = cols - 1;
-      }
-      for (int k = left; k <= right; k++) {
+      int val;
+      for (int k = (int)left; k <= (int)right; k++) {
+        if (k < 0) {
+          val = pnm_get_component(ims, i, 0, 0);
+        }
+        else if (k >= cols) {
+          val = pnm_get_component(ims, i, cols - 1, 0);
+        }
+        else {
+          val = pnm_get_component(ims, i, k, 0);
+        }
         switch (WF) {
           case 1:
-          S += pnm_get_component(ims, i, k, 0) * box(k - j);
+          S += val * box(k - j);
           break;
           case 2:
-          S += pnm_get_component(ims, i, k, 0) * tent(k - j);
+          S += val * tent(k - j);
           break;
           case 3:
-          S += pnm_get_component(ims, i, k, 0) * bell(k - j);
+          S += val * bell(k - j);
           break;
           case 4:
-          S += pnm_get_component(ims, i, k, 0) * mitch(k - j);
+          S += val * mitch(k - j);
           break;
           default:
           break;
         }
       }
+      S = floor(S + 0.5);
       for (int channel = 0; channel < D; channel++) {
-        pnm_set_component(imd, i, j_imd, channel, S);
+        pnm_set_component(imd, i, j_imd, channel, (unsigned short)S);
       }
     }
   }
