@@ -13,9 +13,9 @@ void padding(int factor, char * ims_name, char * imd_name){
   pnm f_ims = pnm_new(f_cols, f_rows, PnmRawPpm);
   unsigned short * data_in;
   unsigned short * f_data_in;
-  fftw_complex * freq_repr_in  = malloc(rows * cols * sizeof(fftw_complex));
+  fftw_complex * freq_repr_in;
   unsigned short * data_out;
-  fftw_complex * f_freq_repr_out;
+  fftw_complex * f_freq_repr_out = malloc(f_rows * f_cols * sizeof(fftw_complex));
 
   //initialisation de l'image de taille finale en noir
   for (int i = 0; i < f_rows; i++) {
@@ -34,7 +34,6 @@ void padding(int factor, char * ims_name, char * imd_name){
 
     //centralisation de l'image initiale sur l'image de taille finale
     f_data_in = pnm_get_channel(f_ims, NULL, k);
-    f_freq_repr_out  = malloc(f_rows * f_cols * sizeof(fftw_complex));
 
     for (int i = 0; i < f_rows * f_cols; i++) {
       f_freq_repr_out[i] = f_data_in[i] + I * 0;
@@ -50,15 +49,15 @@ void padding(int factor, char * ims_name, char * imd_name){
 
     pnm_set_channel(f_ims, data_out, k);
 
+    free(data_out);
+    free(freq_repr_in);
+    free(f_data_in);
+    free(data_in);
   }
 
   pnm_save(f_ims, PnmRawPpm, imd_name);
 
   free(f_freq_repr_out);
-  free(data_out);
-  free(freq_repr_in);
-  free(f_data_in);
-  free(data_in);
   pnm_free(f_ims);
   pnm_free(ims);
 }
