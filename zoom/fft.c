@@ -41,7 +41,7 @@ fftw_complex * forward(int rows, int cols, unsigned short* g_img) {
   return c_out;
 }
 
-unsigned short * backward(int rows, int cols, fftw_complex * freq_repr) {
+unsigned short * backward(int rows, int cols, fftw_complex * freq_repr, int factor) {
   int size = rows * cols;
   fftw_complex * c_out = malloc(size * sizeof(fftw_complex));
   float *float_img = malloc(size * sizeof(float));
@@ -51,7 +51,7 @@ unsigned short * backward(int rows, int cols, fftw_complex * freq_repr) {
   fftw_execute(plan);
 
   for (int i = 0; i < size; i++) {
-    float_img[i] = creal(c_out[i]) / size;
+    float_img[i] = (creal(c_out[i]) * factor * factor) / size;
   }
   shift(rows, cols, float_img);
 
